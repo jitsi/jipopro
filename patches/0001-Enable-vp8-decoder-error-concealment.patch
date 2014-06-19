@@ -1,0 +1,31 @@
+From 53bb061be6c19173a3d66a77f5bc087930e4fab2 Mon Sep 17 00:00:00 2001
+From: Boris Grozev <boris@jitsi.org>
+Date: Tue, 22 Apr 2014 19:02:33 +0200
+Subject: [PATCH] Enable vp8 decoder error concealment.
+
+---
+ libavcodec/libvpxdec.c |    4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/libavcodec/libvpxdec.c b/libavcodec/libvpxdec.c
+index 94e1e4d..6f048e1 100644
+--- a/libavcodec/libvpxdec.c
++++ b/libavcodec/libvpxdec.c
+@@ -45,11 +45,13 @@ static av_cold int vpx_init(AVCodecContext *avctx,
+         /* token partitions+1 would be a decent choice */
+         .threads = FFMIN(avctx->thread_count, 16)
+     };
++    vpx_codec_flags_t flags = VPX_CODEC_USE_ERROR_CONCEALMENT;
+ 
+     av_log(avctx, AV_LOG_INFO, "%s\n", vpx_codec_version_str());
+     av_log(avctx, AV_LOG_VERBOSE, "%s\n", vpx_codec_build_config());
+ 
+-    if (vpx_codec_dec_init(&ctx->decoder, iface, &deccfg, 0) != VPX_CODEC_OK) {
++
++    if (vpx_codec_dec_init(&ctx->decoder, iface, &deccfg, flags) != VPX_CODEC_OK) {
+         const char *error = vpx_codec_error(&ctx->decoder);
+         av_log(avctx, AV_LOG_ERROR, "Failed to initialize decoder: %s\n",
+                error);
+-- 
+1.7.9.5
+

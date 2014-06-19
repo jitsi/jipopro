@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project name="jipopro" basedir="." default="rebuild">
+    <property name="dest" value="classes"/>
+    <property name="lib" value="lib"/>
+    <property name="src" value="src"/>
+    <property name="jipopro.jar" value="jipopro.jar"/>
+    <property name="doc" value="doc"/>
+    <property name="java.doc" value="${doc}/api"/>
+    
+    <property name="profiler.args" value="" />
+    
+    <condition property="runDir"
+             value="-${runDir}"
+             else=".">
+    	<isset property="runDir"/>
+    </condition>
+
+    <path id="project.class.path">
+        <pathelement location="${dest}"/>
+        <fileset dir="lib" includes="*.jar"/>
+    </path>
+    
+	<path id="compile.class.path">
+		<fileset dir="lib" includes="*.jar"/>
+	</path>
+
+    <!--Patternset to exclude files from the output directory:-->
+    <patternset id="dest.exclude">
+        <exclude name="package cache/"/>
+        <exclude name="dependency cache/"/>
+    </patternset>
+
+    <!--  ANT TARGETS -->
+
+    <!-- compiles all classes -->
+   <target name="compile">
+		<mkdir dir="${dest}" />
+		<javac
+			classpathref="compile.class.path"
+			debug="true"
+			destdir="${dest}"
+         fork="true"
+         optimize="true"
+         source="1.6"
+         target="1.6">
+			<src path="${src}"/>
+         <exclude name="org/jitsi/impl/neomedia/codec/audio/speex/Java*"/>
+		</javac>
+	</target>
+
+    <!-- copies resource files if any to the classes directory -->
+    <!--<target name="resource">
+        <copy todir="${dest}">
+            <fileset dir="${src}">
+                <include name="**/*.jpe"/>
+                <include name="**/*.jpeg"/>
+                <include name="**/*.png"/>
+                <include name="**/*.wav"/>
+                <include name="**/*.mp3"/>
+                <include name="**/*.mov"/>
+                <include name="**/*.mp4"/>
+                <include name="**/*.webm"/>
+                <include name="**/*.html"/>
+                <include name="**/*.js"/>
+                <include name="**/*.ttf"/>
+                <include name="**/*.ttc"/>
+                <include name="**/*.properties"/>
+            </fileset>
+        </copy>
+    </target>-->
+
+    <!-- creates the javadocs -->
+    <target name="javadoc">
+        <javadoc author="true" destdir="${java.doc}" package="true">
+            <fileset dir="${src}"/>
+        </javadoc>
+    </target>
+
+    <!-- delete the contents of the classes directory-->
+    <target name="clean">
+        <delete failonerror="false" includeemptydirs="true">
+            <fileset dir="${dest}"/>
+            <fileset dir="doc" />
+        </delete>
+        <delete file="${jipopro.jar}" failonerror="true" quiet="false"/>
+    </target>
+    
+    <!--<target name="run" description="Starts video recording post processing in the current folder.">
+	 	<java classname="org.jitsi.recording.postprocessing.PostProcessing" fork="true" failonerror="true" classpathref="project.class.path">
+	 	</java>
+	 </target>-->
+	 
+	 	 <!--DEBUG-JIPOPRO -->
+    <target name="debug" depends="compile"
+            description="Starts jipopro and wait for debugger to connect on port 5432">
+
+        <!-- we allow users to pass command line args using the "args" system
+             property. However we need to manually set tha prop to an empty
+             string here or otherwise the application would get an argument with
+             the value ${args}-->
+        <property name="args" value=""/>
+
+        <condition property="jvm.maxheapsize"
+                   value="-Xmx256m"
+                   else="" >
+            <os arch="i386" />
+        </condition>
+
+        <!-- forking prevents from debugging -->
+        <java classname="org.jitsi.recording.postprocessing.PostProcessing"
+              fork="true"
+              failonerror="true"
+              classpathref="project.class.path">
+
+            <sysproperty key="smack.debugEnabled"
+                         value="${smack.debugEnabled}"/>
+
+            <!-- Setting properties necessary for dependencies on native libs.-->
+            <!--<sysproperty key="java.library.path"
+                         path="${ld.library.path}:${path}:${dyld.library.path}"/>
+            <sysproperty key="jna.library.path"
+                         path="${ld.library.path}:${path}:${dyld.library.path}"/>
+
+            <env key="LD_LIBRARY_PATH" path="${ld.library.path}"/>
+            <env key="PATH" path="${path}"/>
+            <env key="DYLD_LIBRARY_PATH" path="${dyld.library.path}"/>-->
+
+            <!-- make sure that we automatically enable system.out when running
+                 Jitsi from Ant-->
+            <arg line="--debug"/>
+            <!-- pass to SC args that have been specified by the user -->
+            <arg line="${args}"/>
+
+            <jvmarg value="-Xdebug" />
+            <jvmarg value="-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5432" />
+
+            <!-- add some eventual profiler args, prevent server-class
+                 detection because -server uses much more memory for 32-bit OS
+                 (64-bit always used -server) -->
+            <jvmarg line="${profiler.args} -client ${jvm.maxheapsize}"/>
+        </java>
+    </target>
+	 
+    <target name="run" depends="jar" description="Starts video recording post processing in a folder specified in -DrunDir (default is the current dir).">
+	<exec executable="/bin/bash">
+	    <arg value="${basedir}/run.sh"/>
+	    <arg value="${runDir}"/>
+	</exec>
+    </target>	 
+	 
+    <!-- make everything -->
+    <target name="make" depends="compile,jar"/>
+
+    <!-- clean and make everything -->
+    <target name="rebuild" depends="clean,make" />
+
+    <!-- make javadoc -->
+    <target name="doc" depends="make,javadoc" />
+
+    <!-- create needed subdirs-->
+    <target name="init">
+        <mkdir dir="${dest}"/>
+    </target>
+
+    <!-- create jar file-->
+    <target name="jar" depends="compile">
+        <jar compress="true" destfile="${jipopro.jar}">
+            <fileset dir="${dest}">
+                <patternset refid="dest.exclude"/>
+                <include name="**/*.*"/>
+            </fileset>
+        </jar>
+    </target>
+</project>
