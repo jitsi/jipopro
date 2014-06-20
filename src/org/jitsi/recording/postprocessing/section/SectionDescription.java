@@ -1,3 +1,9 @@
+/*
+ * Jipopro, the Jitsi Post-Processing application for recorded conferences.
+ *
+ * Distributable under LGPL license. See terms of license at gnu.org.
+ */
+
 package org.jitsi.recording.postprocessing.section;
 
 import java.awt.*;
@@ -10,17 +16,12 @@ import org.jitsi.recording.postprocessing.participant.*;
 
 /**
  * Contains the info that is needed in order to process a single section
- * @author vmarinov
+ * @author Vladimir Marinov
  *
  */
 public class SectionDescription {
     /** The list of participants that are active during this section */
     public List<ParticipantInfo> activeParticipants;
-    
-    /** The {@link LayoutStrategy} that is to be used while processing this
-     *  section 
-     */
-    public LayoutStrategy layoutStrategy;
     
     /** The dimensions of the large video */
     public Dimension largeVideoDimension;

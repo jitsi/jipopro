@@ -1,3 +1,9 @@
+/*
+ * Jipopro, the Jitsi Post-Processing application for recorded conferences.
+ *
+ * Distributable under LGPL license. See terms of license at gnu.org.
+ */
+
 package org.jitsi.recording.postprocessing.overlay;
 
 import org.jitsi.recording.postprocessing.*;
@@ -18,7 +24,7 @@ import java.util.regex.*;
  * caller to take control over the file and eventually delete it later on. This
  * overlay also needs a {@link Rectangle} instance which tells what region of
  * the HTML to be snapshot.
- * @author vmarinov
+ * @author Vladimir Marinov
  *
  */
 public class HTMLTemplateOverlay extends Overlay {

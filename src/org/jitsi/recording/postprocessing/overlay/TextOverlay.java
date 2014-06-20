@@ -1,9 +1,15 @@
+/*
+ * Jipopro, the Jitsi Post-Processing application for recorded conferences.
+ *
+ * Distributable under LGPL license. See terms of license at gnu.org.
+ */
+
 package org.jitsi.recording.postprocessing.overlay;
 
 /**
  * A text overlay. To get configured it needs to be set text, position and font 
  * size.
- * @author vmarinov
+ * @author Vladimir Marinov
  *
  */
 public class TextOverlay extends Overlay {

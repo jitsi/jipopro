@@ -1,3 +1,9 @@
+/*
+ * Jipopro, the Jitsi Post-Processing application for recorded conferences.
+ *
+ * Distributable under LGPL license. See terms of license at gnu.org.
+ */
+
 package org.jitsi.recording.postprocessing.overlay.manager;
 
 import java.io.*;
@@ -16,7 +22,7 @@ import org.jitsi.recording.postprocessing.util.*;
  * An {@link OverlaysManager} implementation that generates FFMPEG video filter
  * graphs for overlaying the participant video tiles according to the lower
  * third designs.
- * @author vmarinov
+ * @author Vladimir Marinov
  *
  */
 public class LowerThirdOverlaysManager extends OverlaysManager {

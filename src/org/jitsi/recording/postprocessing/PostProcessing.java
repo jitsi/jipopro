@@ -1,3 +1,8 @@
+/*
+ * Jipopro, the Jitsi Post-Processing application for recorded conferences.
+ *
+ * Distributable under LGPL license. See terms of license at gnu.org.
+ */
 package org.jitsi.recording.postprocessing;
 import java.io.*;
 import java.util.*;
@@ -66,7 +71,7 @@ public class PostProcessing
      * stored in a specific directory.
      */
     private static final ConcatStrategy concatStrategy
-            = new ParallelConcatStrategy();
+            = new SimpleConcatStrategy();
     
     /**
      * An instance that determines which participants are currently active
@@ -75,19 +80,6 @@ public class PostProcessing
     private static ActiveParticipantsManager activeParticipantsManager =
         new WithSpeakerInVideosListParticipantsManager();
 
-    /**
-     * The instant of the event that was last read from the metadata file
-     */
-    private static int eventInstant = 0;
-    /**
-     * The instant of the event that was previously read from the metadata file
-     */
-    private static int lastEventInstant = 0;
-    /**
-     * The instant the first video started
-     */
-    private static int firstVideoStartInstant = -1;
-    
     /**
      * A task queue responsible for decoding the input video files into MJPEG
      * files.
@@ -101,8 +93,14 @@ public class PostProcessing
     private static ExecutorService sectionProcessingTaskQueue =
             Executors.newFixedThreadPool(Config.JIPOPRO_THREADS);
 
+    /**
+     * The time processing has started.
+     */
     private static long processingStarted;
-    
+
+    private static long lastTime = -1;
+    private static List<String> timings = new LinkedList<String>();
+
     public static void main(String[] args)
         throws IOException,
                InterruptedException
@@ -117,6 +115,9 @@ public class PostProcessing
                                   Config.OUTPUT_HEIGHT);
 
         int sectionNumber = 0;
+        int eventInstant = 0;
+        int lastEventInstant = 0;
+        int firstVideoStartInstant = -1;
 
 
         // Read the metadata file.
@@ -139,11 +140,11 @@ public class PostProcessing
         {
             return; //error already logged
         }
-        time("Extracted video events (calculated durations)");
+        time("Extracting video events (calculating durations)");
 
         // Decode videos
         decodeParticipantVideos(videoEvents);
-        time("Finished decoding videos");
+        time("Decoding videos");
 
 
         // And now the magic begins :)
@@ -197,7 +198,7 @@ public class PostProcessing
                     videoDurationError -= SINGLE_FRAME_DURATION;
                 }
                 sectionDesc.endInstant = 
-                    eventInstant + sectionDurationCorrection;
+                    eventInstant; //+ sectionDurationCorrection;
                 
                 sectionProcessingTaskQueue.execute(
                     new SectionProcessingTask(sectionDesc));
@@ -270,7 +271,7 @@ public class PostProcessing
         {
             sectionProcessingTaskQueue.awaitTermination(
                     Long.MAX_VALUE, TimeUnit.NANOSECONDS);
-            time("Sections processed");
+            time("Processing sections");
         }
         catch (InterruptedException e)
         {
@@ -279,9 +280,14 @@ public class PostProcessing
             //should we continue?
         }
 
-        String videoFilename = "output.mov";
-        concatStrategy.concatFiles("sections", "", videoFilename);
-        time("Sections concatenated");
+        /*
+         * XXX we concatenate the sections and encode the video in one step,
+         * because it is more efficient. We ignore the Config.OUTPUT_FORMAT
+         * setting and have hard-coded webm settings in SimpleConcatStrategy.
+         */
+        String videoFilename = "output.webm";
+        concatStrategy.concatFiles("sections", videoFilename);
+        time("Concatenating sections and encode video");
         Exec.exec("rm -rf sections");
 
         // Handle audio
@@ -292,7 +298,7 @@ public class PostProcessing
 
         String audioMix = "resultAudio.wav";
         long firstAudioInstant = mixAudio(audioEvents, audioMix);
-        time("Audio mixed");
+        time("Mixing audio");
 
 
         long audioOffset = 0, videoOffset = 0;
@@ -303,13 +309,17 @@ public class PostProcessing
             videoOffset = -diff;
 
         merge(audioMix, audioOffset, videoFilename, videoOffset, videoFilename);
-        time("Audio and video merged");
+        time("Merging audio and video");
 
-        String finalResult = encodeResultVideo(videoFilename);
-        time("Result encoded");
-        log("All done, result saved in " + finalResult
+        // XXX encoding is now done during concatenation
+        //String finalResult = encodeResultVideo(videoFilename);
+        //time("Encoding final result");
+
+        for (String s : timings)
+            log(s);
+        log("All done, result saved in " + videoFilename
                 + ". And it took only " +
-                millisToSeconds(System.currentTimeMillis()-processingStarted)
+                Utils.millisToSeconds(System.currentTimeMillis() - processingStarted)
                 + " seconds.");
 
         Exec.closeLogFile();
@@ -317,10 +327,15 @@ public class PostProcessing
 
     private static void time(String s)
     {
-        log("[TIME] " + s + ": "
-                    + millisToSeconds(
-                        System.currentTimeMillis() - processingStarted));
+        long lastTime;
+        if (timings.isEmpty())
+            lastTime = processingStarted;
+        else
+            lastTime = PostProcessing.lastTime;
 
+        long now = System.currentTimeMillis();
+        PostProcessing.lastTime = now;
+        timings.add("[TIME] " + s + ": " + Utils.millisToSeconds(now - lastTime));
     }
 
     /**
@@ -345,15 +360,15 @@ public class PostProcessing
                    IOException
     {
         Exec.exec(Config.FFMPEG + " -y"
-                          + " -itsoffset " + millisToSeconds(videoStartOffset)
+                          + " -itsoffset " + Utils.millisToSeconds(videoStartOffset)
                           + " -i " + videoFilename
-                          + " -itsoffset " + millisToSeconds(audioStartOffset)
+                          + " -itsoffset " + Utils.millisToSeconds(audioStartOffset)
                           + " -i " + audioFilename
-                          + " -codec copy temp.mov");
-        Exec.exec("mv " + videoFilename + " output-no-sound.mov"); //keep for debugging
+                          + " -vcodec copy temp.webm");
+        //Exec.exec("mv " + videoFilename + " output-no-sound.mov"); //keep for debugging
 
         // use temp.mov to allow videoFilename == outputFilename
-        Exec.exec("mv temp.mov " + outputFilename);
+        Exec.exec("mv temp.webm " + outputFilename);
     }
 
     /**
@@ -408,10 +423,11 @@ public class PostProcessing
         // the first file is just converted to wav
         Exec.exec("sox " + filenames[0] + " audio_tmp/padded0.wav");
 
+        // TODO in threads
         // the rest need padding
         for (int j = 1; j < i; j++)
             Exec.exec("sox " + filenames[j] + " audio_tmp/padded" + j
-                      + ".wav pad " + millisToSeconds(padding[j]));
+                      + ".wav pad " + Utils.millisToSeconds(padding[j]));
 
         String exec = "sox --combine mix-power ";
         for (int j = 0; j < i; j++)
@@ -462,6 +478,15 @@ public class PostProcessing
                     try
                     {
                         long duration = getVideoDurationMillis(event.getFilename());
+                        if (duration == -1)
+                        {
+                            // Failed to calculate the duration of the video.
+                            // Drop the RECORDING_STARTED event as well
+                            log("Failed to calculate video duration for "
+                                        + event.getFilename() + ". Ignoring "
+                                        + "the file");
+                            continue;
+                        }
                         RecorderEvent newEndedEvent = new RecorderEvent();
                         newEndedEvent.setType(Type.RECORDING_ENDED);
                         newEndedEvent.setInstant(event.getInstant() + duration);
@@ -512,22 +537,45 @@ public class PostProcessing
      */
     private static long getVideoDurationMillis(String filename)
             throws IOException, InterruptedException {
-        String videoInfoFilename = "video_info.txt";
-        //note: this is slow
-        String exec = "ffprobe -v quiet -print_format json=c=1 -show_frames " +
-                filename + " | tail -n 3 | head -n 1 | tee " + videoInfoFilename;
         long videoDuration = 0;
-        
-        Exec.execArray(new String[] { "bash", "-c", exec });
-        
-        try 
+        if (Config.USE_MKVINFO)
         {
-            JSONObject videoInfo = (JSONObject)
-                JSONValue.parse(new FileReader(videoInfoFilename));
-            videoDuration = (Long) videoInfo.get("pkt_pts");
-        } catch (FileNotFoundException e) 
+            String exec = "mkvinfo -v -s " + filename
+                    + " | tail -n 1 | awk '{print $6;}'";
+
+            Process p = Runtime.getRuntime().
+                    exec(new String[] { "bash", "-c", exec });
+            int ret = p.waitFor();
+            if (ret != 0)
+            {
+                log("Failed to extract file duration for " + filename);
+                return -1;
+            }
+
+            BufferedReader reader
+                    = new BufferedReader(new InputStreamReader(p.getInputStream()));
+            videoDuration = Integer.parseInt(reader.readLine());
+        }
+        else
         {
-            e.printStackTrace();
+            String videoInfoFilename = "video_info.txt";
+
+            //note: this is slow
+            String exec = "ffprobe -v quiet -print_format json=c=1 -show_frames " +
+                filename + " | tail -n 3 | head -n 1 | tee " + videoInfoFilename;
+
+            Exec.execArray(new String[] { "bash", "-c", exec });
+        
+            try
+            {
+                JSONObject videoInfo = (JSONObject)
+                    JSONValue.parse(new FileReader(videoInfoFilename));
+                videoDuration = (Long) videoInfo.get("pkt_pts");
+            }
+            catch (FileNotFoundException e)
+            {
+                e.printStackTrace();
+            }
         }
 
         return videoDuration;
@@ -556,7 +604,7 @@ public class PostProcessing
         throws IOException, InterruptedException 
     {
         String outputFilename
-                = trimFileExtension(inputFilename);
+                = Utils.trimFileExtension(inputFilename);
 
         if (Config.OUTPUT_FORMAT == Config.WEBM_OUTPUT_FORMAT)
         {
@@ -592,10 +640,11 @@ public class PostProcessing
         
         Exec.exec(
             Config.FFMPEG + " -y -vcodec libvpx -i " + participantFileName +
-            " -vcodec mjpeg -cpu-used " + Config.FFMPEG_CPU_USED +  
-            " -threads " + Config.FFMPEG_THREADS + " -an -q:v " + Config.QUALITY_LEVEL + " " +
+            " -vcodec mjpeg -cpu-used " + Config.FFMPEG_CPU_USED
+            //+ " -threads " + Config.FFMPEG_THREADS
+            + " -an -q:v " + Config.QUALITY_LEVEL + " " +
             "-r " + Config.OUTPUT_FPS + " " +
-            fadeFilter + trimFileExtension(participantFileName) + ".mov");
+            fadeFilter + Utils.trimFileExtension(participantFileName) + ".mov");
     }
 
     private static void decodeParticipantVideos(List<RecorderEvent> videoEvents)
@@ -633,43 +682,6 @@ public class PostProcessing
             e.printStackTrace();
         }
 
-    }
-
-    /** Converts time in milliseconds to a String representing the time in 
-     * seconds in the format XX.XXX
-     * @param millis the time in milliseconds that we want to convert
-     * @return a String representing the time in seconds in the format XX.XXX
-     */
-    private static String millisToSeconds(long millis)
-    {
-        String result = new String();
-        String complement = "";
-        long fraction = Math.abs(millis) % 1000;
-        
-        if (fraction < 10)
-        {
-            complement = "00";
-        } else if (fraction < 100)
-        {
-            complement = "0";
-        }
-        
-        result += millis / 1000;
-        result += ".";
-        result += complement + fraction;
-        
-        return result;
-    
-    }
-
-    /** Removes the file extension from a file name
-     * @param fileName the file name which extension we want to trim
-     * @return the trimmed file name
-     */
-    private static String trimFileExtension(String fileName) 
-    {
-        int index = fileName.lastIndexOf('.');
-        return fileName.substring(0, index);
     }
 
     /** Perform some initial tests and fail early if they fail. */

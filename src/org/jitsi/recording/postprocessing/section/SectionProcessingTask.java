@@ -1,3 +1,9 @@
+/*
+ * Jipopro, the Jitsi Post-Processing application for recorded conferences.
+ *
+ * Distributable under LGPL license. See terms of license at gnu.org.
+ */
+
 package org.jitsi.recording.postprocessing.section;
 
 import java.awt.*;
@@ -13,10 +19,12 @@ import org.jitsi.recording.postprocessing.util.*;
 /**
  * A {@link Runnable} instance capable of processing a single call section 
  * given a {@link SectionDescription} instance
- * @author vmarinov
+ * @author Vladimir Marinov
  *
  */
-public class SectionProcessingTask implements Runnable {
+public class SectionProcessingTask
+        implements Runnable
+{
     
     /** The info needed to process the given section */
     private SectionDescription sectionDesc;
@@ -29,26 +37,33 @@ public class SectionProcessingTask implements Runnable {
      */
     private String outputDir = "sections/";
     
-    public SectionProcessingTask(SectionDescription sectionDesc) {
+    public SectionProcessingTask(SectionDescription sectionDesc)
+    {
         this.sectionDesc = sectionDesc;
         workDir = "section" + sectionDesc.sequenceNumber + "/";
     }
     
     @Override
-    public void run() {
-            try {
-                Exec.exec("mkdir -p " + workDir);
-                trimVideos(sectionDesc.endInstant, sectionDesc.startInstant);
-                createCurrentSection(
-                    sectionDesc.endInstant, sectionDesc.startInstant);
-                deleteWorkDir();
-            } catch (IOException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            } catch (InterruptedException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            }
+    public void run()
+    {
+        try
+        {
+            Exec.exec("mkdir -p " + workDir);
+            trimVideos(sectionDesc.startInstant, sectionDesc.endInstant);
+            createCurrentSection(
+                sectionDesc.startInstant, sectionDesc.endInstant);
+            deleteWorkDir();
+        }
+        catch (IOException e)
+        {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        catch (InterruptedException e)
+        {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
     }
     
     /** Selects the parts of the input files that correspond to the current 
@@ -58,18 +73,21 @@ public class SectionProcessingTask implements Runnable {
      * @throws InterruptedException 
      * @throws IOException 
     */
-    private void trimVideos(int endInstant, int startInstant) 
+    private void trimVideos(int startInstant, int endInstant)
             throws IOException, InterruptedException
     {
         int smallVideos = 0;
         for (int i = 0; i < sectionDesc.activeParticipants.size(); i++)
         {
-            String filename = new String(), exec = new String();
+            String filename;
+            String exec = "";
             
             if (sectionDesc.activeParticipants.get(i).isCurrentlySpeaking)
             {
                 filename = workDir + "large.mov";
-            } else {
+            }
+            else
+            {
                 filename = workDir + "small";
                 filename += smallVideos;
                 filename += ".mov";
@@ -77,20 +95,19 @@ public class SectionProcessingTask implements Runnable {
             }
             
             exec += Config.FFMPEG + " -y -i ";
-            exec += trimFileExtension(
-                        sectionDesc.activeParticipants.get(i).fileName)
+            exec += Utils.trimFileExtension(
+                    sectionDesc.activeParticipants.get(i).fileName)
                 + ".mov";
             exec += " -vcodec copy -ss ";
-            exec += millisToSeconds(
-                startInstant - 
-                sectionDesc.activeParticipants.
-                    get(i).currentVideoFileStartInstant);
+            exec += Utils.millisToSeconds(
+                    startInstant -
+                            sectionDesc.activeParticipants.
+                                    get(i).currentVideoFileStartInstant);
             exec += " -t ";
-            exec += millisToSeconds(endInstant - startInstant);
+            exec += Utils.millisToSeconds(endInstant - startInstant);
             exec += " ";
             exec += filename;
-          //ffmpeg -i big-buck-bunny_trailer.webm -vcodec libvpx -acodec copy -ss 4.376 -t 16.233 video_trim_test.webm
-            
+
             Exec.exec(exec);
         }
     }
@@ -102,8 +119,9 @@ public class SectionProcessingTask implements Runnable {
      * @throws InterruptedException 
      * @throws IOException 
     */
-    private void createCurrentSection(int endInstant, int startInstant) 
-        throws IOException, InterruptedException
+    private void createCurrentSection(int startInstant, int endInstant)
+        throws IOException,
+               InterruptedException
     {
         int largeVideoWidth, largeVideoHeight;
         List<Dimension> smallVideosDimensions;
@@ -167,7 +185,7 @@ public class SectionProcessingTask implements Runnable {
         //XXX Boris: what is 0.06? Can we make that a constant?
         exec.add("0.06");
         exec.add("-t");
-        exec.add(millisToSeconds(endInstant - startInstant));
+        exec.add(Utils.millisToSeconds(endInstant - startInstant));
         exec.add("-vcodec");
         exec.add("mjpeg");
         exec.add("-cpu-used");
@@ -190,42 +208,5 @@ public class SectionProcessingTask implements Runnable {
     private void deleteWorkDir() throws IOException, InterruptedException
     {
         Exec.exec("rm -rf " + workDir);
-    }
-    
-    /** Removes the file extension from a file name
-     * @param fileName the file name which extension we want to trim
-     * @return the trimmed file name
-     */
-    private String trimFileExtension(String fileName) 
-    {
-        int index = fileName.lastIndexOf('.');
-        return fileName.substring(0, index);
-    }
-    
-    /** Converts time in milliseconds to a String representing the time in 
-     * seconds in the format XX.XXX
-     * @param millis the time in milliseconds that we want to convert
-     * @return a String representing the time in seconds in the format XX.XXX
-     */
-    private String millisToSeconds(int millis) 
-    {
-        String result = new String();
-        String complement = "";
-        int fraction = Math.abs(millis) % 1000;
-        
-        if (fraction < 10)
-        {
-            complement = "00";
-        } else if (fraction < 100)
-        {
-            complement = "0";
-        }
-        
-        result += millis / 1000;
-        result += ".";
-        result += complement + fraction;
-        
-        return result;
-    
     }
 }

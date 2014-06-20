@@ -1,3 +1,9 @@
+/*
+ * Jipopro, the Jitsi Post-Processing application for recorded conferences.
+ *
+ * Distributable under LGPL license. See terms of license at gnu.org.
+ */
+
 package org.jitsi.recording.postprocessing.participant;
 
 import java.util.*;
@@ -6,7 +12,7 @@ import java.util.*;
  * An interface that manages the list of active participants. It takes care of
  * which participants should be show in the videos list and what their order
  * should be
- * @author vmarinov
+ * @author Vladimir Marinov
  *
  */
 public interface ActiveParticipantsManager {

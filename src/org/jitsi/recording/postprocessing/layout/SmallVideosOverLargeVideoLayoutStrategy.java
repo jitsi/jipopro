@@ -1,3 +1,9 @@
+/*
+ * Jipopro, the Jitsi Post-Processing application for recorded conferences.
+ *
+ * Distributable under LGPL license. See terms of license at gnu.org.
+ */
+
 package org.jitsi.recording.postprocessing.layout;
 
 import java.awt.*;
@@ -10,7 +16,7 @@ import java.util.List;
  * An implementation of {@link LayoutStrategy} that preserves the aspect ratios 
  * of the videos. If the small videos exceed band in the lower side of
  * the output video their sizes are reduced so that they fit the band exactly.
- * @author vmarinov
+ * @author Vladimir Marinov
  *
  */
 public class SmallVideosOverLargeVideoLayoutStrategy 

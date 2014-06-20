@@ -1,3 +1,9 @@
+/*
+ * Jipopro, the Jitsi Post-Processing application for recorded conferences.
+ *
+ * Distributable under LGPL license. See terms of license at gnu.org.
+ */
+
 package org.jitsi.recording.postprocessing.video.concat;
 
 import java.io.*;
@@ -10,10 +16,12 @@ import org.jitsi.recording.postprocessing.util.*;
  * A {@link ConcatStrategy} that concatenates video files in parallel. It 
  * concatenates the video files in pairs putting each concat operation in a
  * task queue.
- * @author vmarinov
+ * @author Vladimir Marinov
  *
  */
-public class ParallelConcatStrategy implements ConcatStrategy {
+public class ParallelConcatStrategy
+        implements ConcatStrategy
+{
     
     /**
      * The task queue that processes the concatenation of video files pairs
@@ -23,11 +31,10 @@ public class ParallelConcatStrategy implements ConcatStrategy {
 
     @Override
     public void concatFiles(
-        String sourceDir, String outputDir, String outputFilename) 
+        String sourceDir, String outputFilename)
     {
         sourceDir = sourceDir.isEmpty() ? "." : sourceDir;
-        outputDir = outputDir.isEmpty() ? "." : outputDir;
-        
+
         int filesNum = (new File(sourceDir)).listFiles().length;
         int passNum = 0;
         
@@ -128,7 +135,7 @@ public class ParallelConcatStrategy implements ConcatStrategy {
         
         try {
             Exec.exec("mv " + sourceDir + "/" + passNum + "_0.mov " 
-                + outputDir + "/" + outputFilename);
+                + outputFilename);
         } catch (IOException e) {
             e.printStackTrace();
         } catch (InterruptedException e) {

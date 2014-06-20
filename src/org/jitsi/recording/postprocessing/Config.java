@@ -1,3 +1,9 @@
+/*
+ * Jipopro, the Jitsi Post-Processing application for recorded conferences.
+ *
+ * Distributable under LGPL license. See terms of license at gnu.org.
+ */
+
 package org.jitsi.recording.postprocessing;
 
 import java.util.*;
@@ -61,4 +67,9 @@ public class Config
      * sections and video files decoding 
      */
     public static int JIPOPRO_THREADS = 3;
+
+    /**
+     * Whether or not to use MKVINFO to calculate webm file duration.
+     */
+    public static boolean USE_MKVINFO = true;
 }

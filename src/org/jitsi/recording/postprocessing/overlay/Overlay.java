@@ -1,3 +1,9 @@
+/*
+ * Jipopro, the Jitsi Post-Processing application for recorded conferences.
+ *
+ * Distributable under LGPL license. See terms of license at gnu.org.
+ */
+
 package org.jitsi.recording.postprocessing.overlay;
 
 import java.awt.*;
@@ -8,7 +14,7 @@ import org.jitsi.recording.postprocessing.overlay.manager.*;
 /**
  * Interface that represents an item that is overlayed on a single participant
  * video tile (e.g. text, image, avatar etc.)
- * @author vmarinov
+ * @author Vladimir Marinov
  */
 public abstract class Overlay {
     /** The dimension of the video tile */

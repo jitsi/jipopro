@@ -1,9 +1,15 @@
+/*
+ * Jipopro, the Jitsi Post-Processing application for recorded conferences.
+ *
+ * Distributable under LGPL license. See terms of license at gnu.org.
+ */
+
 package org.jitsi.recording.postprocessing.overlay;
 
 /**
  * An image overlay. It needs path to the image to be set as well as image
  * dimensions and position.
- * @author vmarinov
+ * @author Vladimir Marinov
  *
  */
 public class ImageOverlay extends Overlay {

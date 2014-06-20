@@ -1,8 +1,14 @@
+/*
+ * Jipopro, the Jitsi Post-Processing application for recorded conferences.
+ *
+ * Distributable under LGPL license. See terms of license at gnu.org.
+ */
+
 package org.jitsi.recording.postprocessing.participant;
 
 /**
  * Holds information about a participant in the video call being recorded
- * @author vmarinov
+ * @author Vladimir Marinov
  *
  */
 public class ParticipantInfo implements Cloneable {

@@ -1,8 +1,14 @@
+/*
+ * Jipopro, the Jitsi Post-Processing application for recorded conferences.
+ *
+ * Distributable under LGPL license. See terms of license at gnu.org.
+ */
+
 package org.jitsi.recording.postprocessing.layout;
 
 /**
  * A simple class that contains basic aspect ratio information.
- * @author vmarinov
+ * @author Vladimir Marinov
  *
  */
 public class AspectRatioUtil {

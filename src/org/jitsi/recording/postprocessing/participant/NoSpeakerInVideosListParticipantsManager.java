@@ -1,3 +1,9 @@
+/*
+ * Jipopro, the Jitsi Post-Processing application for recorded conferences.
+ *
+ * Distributable under LGPL license. See terms of license at gnu.org.
+ */
+
 package org.jitsi.recording.postprocessing.participant;
 
 import java.util.*;
@@ -5,7 +11,7 @@ import java.util.*;
 /**
  * An implementation of {@link ActiveParticipantsManager} that doesn't show
  * the active speaker in the active participants list
- * @author vmarinov
+ * @author Vladimir Marinov
  */
 public class NoSpeakerInVideosListParticipantsManager 
     implements ActiveParticipantsManager 
