@@ -138,7 +138,7 @@ public class SectionProcessingTask
         
         String vf = "movie=" + workDir + "large.mov, scale=";
         vf += largeVideoWidth + ":" + largeVideoHeight + " [large];";
-        vf += "movie=logo.bmp, scale=200:-1 [logo];";
+        vf += "movie=logo_200x.bmp [logo];";
         vf += "[large][logo] overlay=30:30 [largeWithLogo];";
         
         for (int i = 0, j = 0; i < sectionDesc.activeParticipants.size(); i++)

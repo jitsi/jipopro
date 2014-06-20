@@ -118,10 +118,7 @@ public class SectionProcessingTaskNoTrimImpl
         if(activeParticipantSmall !=null)
         v+="[presmall"+activeParticipantSmallIndex+"] scale="+(smallVideosDimensions.get(activeParticipantSmallIndex).width+1)+":"+smallVideosDimensions.get(activeParticipantSmallIndex).height+" [small"+activeParticipantSmallIndex+"];";
 
-
-        //String vf = "movie=" + workDir + "large.mov, scale=";
-        //vf += largeVideoWidth + ":" + largeVideoHeight + " [large];";
-        v += "movie=logo.bmp, scale=200:-1 [logo];"; //TODO: avoid scale logo
+        v += "movie=logo_200x.bmp [logo];"; //TODO: avoid scale logo
         v += "[large][logo] overlay=30:30 [largeWithLogo];";
 
         for (int i = 0, j = 0; i < sectionDesc.activeParticipants.size(); i++)
