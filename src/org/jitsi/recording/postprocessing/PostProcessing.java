@@ -207,7 +207,7 @@ public class PostProcessing
                 hasProcessedEvents = true;
                 lastEventInstant = eventInstant;
             }
-            else if (eventInstant - lastEventInstant >= MINIMUM_SECTION_DURATION)
+            else if (eventInstant - lastEventInstant < MINIMUM_SECTION_DURATION)
             {
                 System.err.println("Ignoring an event because it's too close"
                                    + "to the previous: " + event.getType()
