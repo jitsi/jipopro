@@ -23,8 +23,9 @@ public class SimpleConcatStrategy
 {
 
     @Override
-    public void concatFiles(
-        String sourceDir, String outputFilename)
+    public void concatFiles(String sourceDir, String outputFilename)
+        throws IOException, InterruptedException
+
     {
         sourceDir = sourceDir.isEmpty() ? "." : sourceDir;
 
@@ -50,17 +51,9 @@ public class SimpleConcatStrategy
             e.printStackTrace();
         }
 
-        try
-        {
-            // TODO support Config.OUTPUT_FORMAT
-            Exec.exec(Config.FFMPEG + " -y -f concat -i "
-                  + concatFilename + " -c:v libvpx -cpu-used 16 -threads "
-                  + Config.FFMPEG_THREADS+" -b:v 1M " + outputFilename);
-        }
-        catch (Exception e)
-        {
-            System.err.println("Failed to concatenate sections: " + e);
-
-        }
+        // TODO support Config.OUTPUT_FORMAT
+        Exec.exec(Config.FFMPEG + " -y -f concat -i "
+              + concatFilename + " -c:v libvpx -cpu-used 16 -threads "
+              + Config.FFMPEG_THREADS+" -b:v 1M " + outputFilename);
     }
 }

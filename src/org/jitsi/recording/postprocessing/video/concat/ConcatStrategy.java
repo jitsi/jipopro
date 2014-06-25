@@ -6,7 +6,9 @@
 
 package org.jitsi.recording.postprocessing.video.concat;
 
-/** 
+import java.io.*;
+
+/**
  * An interface that describes a strategy for concating the video files 
  * contained in a given directory
  * @author Vladimir Marinov
@@ -18,6 +20,6 @@ public interface ConcatStrategy {
      * @param sourceDir path to the directory where the video files are
      * @param outputFilename the name of the output video file
      */
-    public void concatFiles(
-        String sourceDir, String outputFilename);
+    public void concatFiles(String sourceDir, String outputFilename)
+        throws IOException, InterruptedException;
 }
