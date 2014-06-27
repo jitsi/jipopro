@@ -693,6 +693,7 @@ public class PostProcessing
 
         try
         {
+            /*
             p = runtime.exec("which phantomjs");
             ret = p.waitFor();
             if (ret != 0)
@@ -700,6 +701,7 @@ public class PostProcessing
                 System.err.println("Cannot find 'phantomjs' executable.");
                 return false;
             }
+            */
 
             p = runtime.exec("which " + Config.FFMPEG);
             ret = p.waitFor();
