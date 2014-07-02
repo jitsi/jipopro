@@ -13,7 +13,7 @@ http://www.evermeet.cx/ffmpeg/
 ## Building ffmpeg on ubuntu:
 ### Dependencies:
 #### From packages
-> apt-get install libxft-dev libmp3lame-dev libvorbis-dev
+> apt-get install libxft-dev libmp3lame-dev libvorbis-dev yasm
 
 #### libvpx from git, because ubuntu has a very old version (1.0.0)
 Get the sources:

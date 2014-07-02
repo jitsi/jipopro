@@ -35,9 +35,10 @@ public class SectionProcessingTaskNoTrimImpl
      */
     private String outputDir = "sections/";
 
-    public SectionProcessingTaskNoTrimImpl(SectionDescription sectionDesc)
+    public SectionProcessingTaskNoTrimImpl(SectionDescription sectionDesc, String dir)
     {
         this.sectionDesc = sectionDesc;
+        outputDir = dir + "sections";
     }
 
     @Override

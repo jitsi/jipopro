@@ -72,4 +72,8 @@ public class Config
      * Whether or not to use MKVINFO to calculate webm file duration.
      */
     public static boolean USE_MKVINFO = true;
+
+    static final String IN_ARG_NAME = "--in=";
+    static final String OUT_ARG_NAME = "--out=";
+    static final String RESOURCES_ARG_NAME = "--resources=";
 }

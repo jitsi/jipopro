@@ -17,6 +17,12 @@ public class ParticipantInfo implements Cloneable {
      * The name of the participant's video file
      */
     public String fileName;
+
+    /**
+     * The name of the "decoded" (e.g. MJPEG mov) file used for the participant.
+     */
+    public String decodedFilename;
+
     /**
      * The aspect ratio of the participant's video file
      */

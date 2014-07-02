@@ -98,6 +98,10 @@ public class PostProcessing
      */
     private static long processingStarted;
 
+    private static String inDir;
+    private static String outDir;
+    private static String resourcesDir;
+
     private static long lastTime = -1;
     private static List<String> timings = new LinkedList<String>();
 
@@ -105,6 +109,25 @@ public class PostProcessing
         throws IOException,
                InterruptedException
     {
+        inDir = new java.io.File( "." ).getCanonicalPath() + "/";
+        outDir = inDir;
+        resourcesDir = inDir;
+
+        for (String arg : args)
+        {
+            if (arg.startsWith(Config.IN_ARG_NAME))
+                inDir = arg.substring(Config.IN_ARG_NAME.length()) + "/";
+            else if (arg.startsWith(Config.OUT_ARG_NAME))
+                outDir = arg.substring(Config.OUT_ARG_NAME.length()) + "/";
+            else if (arg.startsWith(Config.RESOURCES_ARG_NAME))
+                resourcesDir
+                    = arg.substring(Config.RESOURCES_ARG_NAME.length()) + "/";
+        }
+
+        log("Input directory: " + inDir);
+        log("Output directory: " + outDir);
+        log("Resources directory: " + resourcesDir);
+
         processingStarted = System.currentTimeMillis();
         initLogFile();
 
@@ -122,7 +145,7 @@ public class PostProcessing
 
         // Read the metadata file.
         JSONObject metadataJSONObject = null;
-        Scanner scanner = new Scanner(new File(Config.METADATA_FILENAME));
+        Scanner scanner = new Scanner(new File(inDir + Config.METADATA_FILENAME));
         String metadataString = scanner.useDelimiter("\\Z").next();
         scanner.close();
 
@@ -130,7 +153,7 @@ public class PostProcessing
         if (metadataJSONObject == null)
         {
             log("Failed to parse metadata from "
-                                 + Config.METADATA_FILENAME + ". Broken json?");
+                    + inDir + Config.METADATA_FILENAME + ". Broken json?");
             return;
         }
 
@@ -201,7 +224,7 @@ public class PostProcessing
                     eventInstant; //+ sectionDurationCorrection;
                 
                 sectionProcessingTaskQueue.execute(
-                    new SectionProcessingTask(sectionDesc));
+                    new SectionProcessingTask(sectionDesc, outDir, resourcesDir));
                 
                 sectionNumber++;
                 hasProcessedEvents = true;
@@ -227,7 +250,9 @@ public class PostProcessing
                         event.getAspectRatio() == AspectRatio.ASPECT_RATIO_16_9 ?
                         AspectRatioUtil.ASPECT_RATIO_16_9 :
                         AspectRatioUtil.ASPECT_RATIO_4_3;
-                    participant.fileName = event.getFilename();
+                    participant.fileName = inDir + event.getFilename();
+                    participant.decodedFilename = outDir +
+                            Utils.trimFileExtension(event.getFilename()) + ".mov";
                     participant.username = event.getParticipantName();
 
                     //XXX Boris: if an event doesn't have a participantName
@@ -285,10 +310,10 @@ public class PostProcessing
          * because it is more efficient. We ignore the Config.OUTPUT_FORMAT
          * setting and have hard-coded webm settings in SimpleConcatStrategy.
          */
-        String videoFilename = "output.webm";
-        concatStrategy.concatFiles("sections", videoFilename);
+        String videoFilename = outDir + "output.webm";
+        concatStrategy.concatFiles(outDir+"sections", videoFilename);
         time("Concatenating sections and encode video");
-        Exec.exec("rm -rf sections");
+        Exec.exec("rm -rf " + outDir + "sections");
 
         // Handle audio
         List<RecorderEvent> audioEvents
@@ -296,7 +321,7 @@ public class PostProcessing
         if (audioEvents == null)
             return; //error already logged
 
-        String audioMix = "resultAudio.wav";
+        String audioMix = outDir + "resultAudio.wav";
         long firstAudioInstant = mixAudio(audioEvents, audioMix);
         time("Mixing audio");
 
@@ -364,11 +389,11 @@ public class PostProcessing
                           + " -i " + videoFilename
                           + " -itsoffset " + Utils.millisToSeconds(audioStartOffset)
                           + " -i " + audioFilename
-                          + " -vcodec copy temp.webm");
+                          + " -vcodec copy " + outDir + "temp.webm");
         //Exec.exec("mv " + videoFilename + " output-no-sound.mov"); //keep for debugging
 
         // use temp.mov to allow videoFilename == outputFilename
-        Exec.exec("mv temp.webm " + outputFilename);
+        Exec.exec("mv " + outDir + "temp.webm " + outputFilename);
     }
 
     /**
@@ -399,7 +424,7 @@ public class PostProcessing
                 // workaround a current problem with the recorder which leaves
                 // empty files. also, sox chokes on small files
                 int minAudioFileSize = 4000;
-                File file = new File(event.getFilename());
+                File file = new File(inDir + event.getFilename());
                 if (!file.exists() || file.length() < minAudioFileSize)
                     continue;
 
@@ -412,30 +437,30 @@ public class PostProcessing
                     padding[i] = nextAudioFileInstant - firstAudioFileInstant;
                 }
 
-                filenames[i] = event.getFilename();
+                filenames[i] = inDir + event.getFilename();
 
                 i++;
             }
         }
 
-        Exec.exec("mkdir -p audio_tmp");
+        Exec.exec("mkdir -p " + outDir + "audio_tmp");
 
         // the first file is just converted to wav
-        Exec.exec("sox " + filenames[0] + " audio_tmp/padded0.wav");
+        Exec.exec("sox " + filenames[0] + " " + outDir + "audio_tmp/padded0.wav");
 
         // TODO in threads
         // the rest need padding
         for (int j = 1; j < i; j++)
-            Exec.exec("sox " + filenames[j] + " audio_tmp/padded" + j
+            Exec.exec("sox " + filenames[j] + " " + outDir + "audio_tmp/padded" + j
                       + ".wav pad " + Utils.millisToSeconds(padding[j]));
 
         String exec = "sox --combine mix-power ";
         for (int j = 0; j < i; j++)
-            exec += "audio_tmp/padded" + j + ".wav ";
+            exec += outDir + "audio_tmp/padded" + j + ".wav ";
         exec += outputFilename;
         Exec.exec(exec);
 
-        Exec.exec("rm -rf audio_tmp");
+        Exec.exec("rm -rf " + outDir + "audio_tmp");
 
         return firstAudioFileInstant;
     }
@@ -558,7 +583,7 @@ public class PostProcessing
         }
         else
         {
-            String videoInfoFilename = "video_info.txt";
+            String videoInfoFilename = outDir + "video_info.txt";
 
             //note: this is slow
             String exec = "ffprobe -v quiet -print_format json=c=1 -show_frames " +
@@ -639,12 +664,12 @@ public class PostProcessing
         }
         
         Exec.exec(
-            Config.FFMPEG + " -y -vcodec libvpx -i " + participantFileName +
+            Config.FFMPEG + " -y -vcodec libvpx -i " + inDir + participantFileName +
             " -vcodec mjpeg -cpu-used " + Config.FFMPEG_CPU_USED
             //+ " -threads " + Config.FFMPEG_THREADS
             + " -an -q:v " + Config.QUALITY_LEVEL + " " +
             "-r " + Config.OUTPUT_FPS + " " +
-            fadeFilter + Utils.trimFileExtension(participantFileName) + ".mov");
+            fadeFilter + outDir + Utils.trimFileExtension(participantFileName) + ".mov");
     }
 
     private static void decodeParticipantVideos(List<RecorderEvent> videoEvents)
@@ -722,9 +747,9 @@ public class PostProcessing
             return false;
         }
 
-        if (!new File(Config.METADATA_FILENAME).exists())
+        if (!new File(inDir + Config.METADATA_FILENAME).exists())
         {
-            System.err.println("Metadata file " + Config.METADATA_FILENAME
+            System.err.println("Metadata file " + inDir + Config.METADATA_FILENAME
                 + " does not exist.");
             return false;
         }
@@ -734,7 +759,7 @@ public class PostProcessing
 
     private static void initLogFile()
     {
-        File logFile = new File(Config.LOG_FILENAME);
+        File logFile = new File(outDir + Config.LOG_FILENAME);
         boolean fail = false;
         Exception e = null;
 

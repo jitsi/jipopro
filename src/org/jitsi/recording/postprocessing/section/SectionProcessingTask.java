@@ -36,11 +36,17 @@ public class SectionProcessingTask
      *  will be saved to 
      */
     private String outputDir = "sections/";
+
+    private String resourcesDir;
     
-    public SectionProcessingTask(SectionDescription sectionDesc)
+    public SectionProcessingTask(SectionDescription sectionDesc,
+                                 String outDir,
+                                 String resourcesDir)
     {
         this.sectionDesc = sectionDesc;
-        workDir = "section" + sectionDesc.sequenceNumber + "/";
+        workDir = outDir + "section" + sectionDesc.sequenceNumber + "/";
+        outputDir = outDir + "sections/";
+        this.resourcesDir = resourcesDir;
     }
     
     @Override
@@ -95,9 +101,7 @@ public class SectionProcessingTask
             }
             
             exec += Config.FFMPEG + " -y -i ";
-            exec += Utils.trimFileExtension(
-                    sectionDesc.activeParticipants.get(i).fileName)
-                + ".mov";
+            exec += sectionDesc.activeParticipants.get(i).decodedFilename;
             exec += " -vcodec copy -ss ";
             exec += Utils.millisToSeconds(
                     startInstant -
@@ -138,7 +142,7 @@ public class SectionProcessingTask
         
         String vf = "movie=" + workDir + "large.mov, scale=";
         vf += largeVideoWidth + ":" + largeVideoHeight + " [large];";
-        vf += "movie=logo_200x.bmp [logo];";
+        vf += "movie=" + resourcesDir + "logo_200x.bmp [logo];";
         vf += "[large][logo] overlay=30:30 [largeWithLogo];";
         
         for (int i = 0, j = 0; i < sectionDesc.activeParticipants.size(); i++)
@@ -178,7 +182,7 @@ public class SectionProcessingTask
         exec.add("-loop");
         exec.add("1");
         exec.add("-i");
-        exec.add("background.bmp");
+        exec.add(resourcesDir+"background.bmp");
         exec.add("-r");
         exec.add(Integer.toString(Config.OUTPUT_FPS));
         exec.add("-ss");

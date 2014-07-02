@@ -5,6 +5,7 @@ Jitsi Videobridge Post Processing (JIPOPRO) for Recorded sessions
 
 
 ## Requirements:
+* apache ant to build
 * ffmpeg (see FFMPEG.md for details)
 * sox with mp3 support (on debian/ubuntu install 'sox' and 'libsox-fmt-mp3')
 
