@@ -530,16 +530,17 @@ public class PostProcessing
                 }
             }
 
-            Collections.sort(eventList, new Comparator<RecorderEvent>() {
-                @Override
-                public int compare(RecorderEvent o1, RecorderEvent o2)
-                {
-                   return (int) (o1.getInstant() - o2.getInstant());
-                }
-            });
-
             eventList.add(event);
         }
+
+
+        Collections.sort(eventList, new Comparator<RecorderEvent>() {
+            @Override
+            public int compare(RecorderEvent o1, RecorderEvent o2)
+            {
+                return (int) (o1.getInstant() - o2.getInstant());
+            }
+        });
 
         return eventList;
     }
