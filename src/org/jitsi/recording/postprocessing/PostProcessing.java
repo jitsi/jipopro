@@ -39,7 +39,7 @@ public class PostProcessing
      * The minimum duration that a section can have (the difference between
      * two consecutive event instants) in order for it to get processed.
      */
-    private static final int MINIMUM_SECTION_DURATION = 100;
+    private static final int MINIMUM_SECTION_DURATION = 50;
 
     /**
      * The length of video trimming result is usually bigger than the section
@@ -164,6 +164,10 @@ public class PostProcessing
             return; //error already logged
         }
         time("Extracting video events (calculating durations)");
+        for(RecorderEvent e: videoEvents)
+        {
+            System.err.println("aaaa "+e.getInstant()+" "+e.getType()+" "+e.getSsrc());
+        }
 
         // Decode videos
         decodeParticipantVideos(videoEvents);
