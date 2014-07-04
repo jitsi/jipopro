@@ -164,10 +164,6 @@ public class PostProcessing
             return; //error already logged
         }
         time("Extracting video events (calculating durations)");
-        for(RecorderEvent e: videoEvents)
-        {
-            System.err.println("aaaa "+e.getInstant()+" "+e.getType()+" "+e.getSsrc());
-        }
 
         // Decode videos
         decodeParticipantVideos(videoEvents);
