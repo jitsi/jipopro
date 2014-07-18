@@ -21,7 +21,7 @@ public class WithSpeakerInVideosListParticipantsManager
     /**
      * The maximum number of small videos that can be shown
      */
-    private final int MAX_ACTIVE_PARTICIPANTS_NUMBER = 4;
+    private final int MAX_ACTIVE_PARTICIPANTS_NUMBER = 7;
     
     /**
      * A list containing all the participants
