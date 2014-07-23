@@ -161,7 +161,8 @@ public class Exec
 
         if (exitCode != 0)
         {
-            logWriter.flush();
+            if (logWriter != null)
+                logWriter.flush();
             throw new CommandLineExecutionException(exitCode, commandStr);
         }
     }

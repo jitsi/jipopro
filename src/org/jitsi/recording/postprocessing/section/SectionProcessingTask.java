@@ -12,8 +12,10 @@ import java.io.*;
 import java.util.*;
 //Disambiguation
 import java.util.List;
+import java.util.regex.*;
 
 import org.jitsi.recording.postprocessing.*;
+import org.jitsi.recording.postprocessing.participant.*;
 import org.jitsi.recording.postprocessing.util.*;
 
 /**
@@ -30,7 +32,7 @@ public class SectionProcessingTask
     private SectionDescription sectionDesc;
     
     /** A directory that this instance will use to save some temp files */
-    private String workDir = "";
+    private String workDir;
     
     /** The directory that the video resulting from processing this section 
      *  will be saved to 
@@ -46,7 +48,7 @@ public class SectionProcessingTask
         this.sectionDesc = sectionDesc;
         workDir = outDir + "section" + sectionDesc.sequenceNumber + "/";
         outputDir = outDir + "sections/";
-        this.resourcesDir = resourcesDir;
+        this.resourcesDir = resourcesDir + "/";
     }
     
     @Override
@@ -144,16 +146,56 @@ public class SectionProcessingTask
         vf += largeVideoWidth + ":" + largeVideoHeight + " [large];";
         vf += "movie=" + resourcesDir + "logo_200x.bmp [logo];";
         vf += "[large][logo] overlay=30:30 [largeWithLogo];";
-        
+
+        ParticipantInfo currentlySpeaking = null;
+        for (ParticipantInfo p : sectionDesc.activeParticipants)
+        {
+            if (p.isCurrentlySpeaking)
+            {
+                currentlySpeaking = p;
+                break;
+            }
+        }
+        if (currentlySpeaking == null)
+        {
+            System.err.println("No currently speaking participant, can't "
+                               + "process section.");
+            return;
+        }
+
         for (int i = 0, j = 0; i < sectionDesc.activeParticipants.size(); i++)
         {
-            if (!sectionDesc.activeParticipants.get(i).isCurrentlySpeaking)
+            ParticipantInfo participant = sectionDesc.activeParticipants.get(i);
+
+            if (participant == currentlySpeaking)
+                continue;
+
+            Dimension dimension =smallVideosDimensions.get(j);
+            boolean useVideo = true;
+
+            if (Config.USE_PARTICIPANT_IMAGES
+                    && participant.fileName.equals(currentlySpeaking.fileName))
+            {
+                // small video for the active speaker
+                useVideo = false;
+                String imageFilename  = getImage(participant.username,
+                                                 dimension.width+1,
+                                                 dimension.height);
+
+                if (imageFilename != null)
+                    vf += "movie=" + imageFilename +" [small" + j + "];";
+                else
+                    useVideo = true;
+            }
+
+            if (useVideo)
             {
                 vf += "movie=" + workDir + "small" + j + ".mov, scale=";
-                vf += (smallVideosDimensions.get(j).width + 1) + ":" + 
-                    smallVideosDimensions.get(j).height + "[small" + j + "];";
-                j++;
+                vf += (dimension.width + 1) + ":" +
+                      dimension.height + "[small" + j + "];";
             }
+
+            j++;
         }
         
         vf += "[in][largeWithLogo] overlay=" + 
@@ -211,6 +253,71 @@ public class SectionProcessingTask
      */
     private void deleteWorkDir() throws IOException, InterruptedException
     {
-        Exec.exec("rm -rf " + workDir);
+       Exec.exec("rm -rf " + workDir);
+    }
+
+    private String getImage(String displayName,
+                            int width,
+                            int height)
+    {
+        String html = "";
+        String htmlFilename = workDir + "participant-name.html";
+
+        try
+        {
+            Scanner scanner
+                    = new Scanner(
+                    new File(resourcesDir + "participant-name.html"));
+            html = scanner.useDelimiter("\\Z").next();
+            scanner.close();
+        }
+        catch (FileNotFoundException e)
+        {
+            System.err.println("Failed to generate image for participant,"
+                                       + " not using an image: " + e);
+            return null;
+        }
+
+        html = html.replaceAll(Pattern.quote("${WIDTH}"), ""+width);
+        html = html.replaceAll(Pattern.quote("${HEIGHT}"), ""+height);
+        html = html.replaceAll(Pattern.quote("${NAME}"), ""+displayName);
+
+        try
+        {
+            FileWriter fw = new FileWriter(htmlFilename);
+            fw.write(html);
+            fw.close();
+        }
+        catch (IOException ioe)
+        {
+            System.err.println("Failed to generate image for participant,"
+                                       + " not using an image: " + ioe);
+            return null;
+        }
+
+        try
+        {
+            List<String> exec = new LinkedList<String>();
+            exec.add("phantomjs");
+            exec.add(resourcesDir + "js/rasterize.js");
+            exec.add(htmlFilename);
+            exec.add(workDir + "participant-name.bmp");
+            Exec.execList(exec);
+
+            exec = new LinkedList<String>();
+            exec.add("convert");
+            exec.add(workDir + "participant-name.bmp");
+            exec.add("-crop");
+            exec.add(width+"x"+height+"+0+0");
+            exec.add(workDir + "participant-name-cropped.bmp");
+            Exec.execList(exec);
+        }
+        catch (Exception e)
+        {
+            System.err.println("Failed to generate image for participant,"
+                                       + " not using an image: " + e);
+            return null;
+        }
+        return workDir + "participant-name-cropped.bmp";
     }
 }

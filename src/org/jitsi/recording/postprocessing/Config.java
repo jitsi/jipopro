@@ -81,4 +81,6 @@ public class Config
     static final String IN_ARG_NAME = "--in=";
     static final String OUT_ARG_NAME = "--out=";
     static final String RESOURCES_ARG_NAME = "--resources=";
+
+    public static final boolean USE_PARTICIPANT_IMAGES = true;
 }

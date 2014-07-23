@@ -227,7 +227,8 @@ public class PostProcessing
                 
                 sectionProcessingTaskQueue.execute(
                     new SectionProcessingTask(sectionDesc, outDir, resourcesDir));
-                
+                    //new SectionProcessingTaskNoTrimImpl(sectionDesc, outDir, resourcesDir));
+
                 sectionNumber++;
                 hasProcessedEvents = true;
                 lastEventInstant = eventInstant;

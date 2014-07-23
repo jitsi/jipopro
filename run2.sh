@@ -7,7 +7,7 @@
 
 #Note: both $1 and $2 have to be absolute
 
-mkdir $2/sections/
+mkdir -p $2/sections/
 mkdir -p $2/temp/lower-third
 
 resources="`pwd`/resources"

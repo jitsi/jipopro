@@ -42,7 +42,7 @@ public class SimpleConcatStrategy
         try
         {
             writer = new PrintWriter(concatFilename);
-            for (int i = 0; i<filesNum-1; i++)
+            for (int i = 0; i<filesNum; i++)
                 writer.println("file 0_" + i + ".mov");
             writer.close();
         }
