@@ -142,14 +142,16 @@ public class PostProcessing
         int lastEventInstant = 0;
         int firstVideoStartInstant = -1;
 
+        // Read an "endpointId" -> "displayName" map
+        Map<String, String> endpoints = readEndpoints();
 
         // Read the metadata file.
-        JSONObject metadataJSONObject = null;
         Scanner scanner = new Scanner(new File(inDir + Config.METADATA_FILENAME));
         String metadataString = scanner.useDelimiter("\\Z").next();
         scanner.close();
 
-        metadataJSONObject = (JSONObject) JSONValue.parse(metadataString);
+        JSONObject metadataJSONObject
+                = (JSONObject) JSONValue.parse(metadataString);
         if (metadataJSONObject == null)
         {
             log("Failed to parse metadata from "
@@ -253,12 +255,14 @@ public class PostProcessing
                     participant.fileName = inDir + event.getFilename();
                     participant.decodedFilename = outDir +
                             Utils.trimFileExtension(event.getFilename()) + ".mov";
-                    participant.username = event.getParticipantName();
+
+                    participant.username = endpoints.get(event.getEndpointId());
 
                     //XXX Boris: if an event doesn't have a participantName
                     //it now returns null instead of "". This should probably be
                     //fixed somewhere else (participant.setUsername()?)
-                    if (participant.username == null)
+                    if (participant.username == null
+                            || participant.username.equals("null"))
                         participant.username = "";
                     participant.description = event.getParticipantDescription();
                     if (participant.description == null)
@@ -788,5 +792,42 @@ public class PostProcessing
         {
             Exec.setLogFile(logFile);
         }
+    }
+
+    /**
+     * Read the endpoints file.
+     * @return a map between endpoint ID and a display name
+     */
+    private static Map<String, String> readEndpoints()
+    {
+        Map<String, String> endpoints = new HashMap<String,String>();
+
+        String endpointsString;
+        try
+        {
+            Scanner scanner
+                    = new Scanner(new File(inDir + Config.ENDPOINTS_FILENAME));
+            endpointsString = scanner.useDelimiter("\\Z").next();
+            scanner.close();
+
+            JSONArray endpointsJSONArray
+                = (JSONArray) JSONValue.parse(endpointsString);
+
+            if (endpointsJSONArray == null)
+                return endpoints;
+
+            for (Object o : endpointsJSONArray)
+            {
+                endpoints.put( (String) ((JSONObject)o).get("id"),
+                               (String) ((JSONObject)o).get("displayName"));
+            }
+        }
+        catch (Exception e)
+        {
+            System.err.println("Failed to read endpoints file: " + e
+                    + "\nGoing on without an endpoints map");
+        }
+
+        return endpoints;
     }
 }

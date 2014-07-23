@@ -41,6 +41,11 @@ public class Config
     /** The name of the file containing the metadata. */
     static String METADATA_FILENAME = "metadata.json";
 
+    /**
+     * The name of the file containing information about endpoints.
+     */
+    static String ENDPOINTS_FILENAME = "endpoints.json";
+
     /** The name of the file where logs will be stored. */
     static String LOG_FILENAME = "jipopro.log";
 

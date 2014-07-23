@@ -156,9 +156,9 @@ public class HTMLTemplateOverlay extends Overlay {
     
     /**
      * Returns the filename of the HTML file produced by replacing the real 
-     * data in the HTML tepmlate file
+     * data in the HTML template file
      * @return the filename of the HTML file produced by replacing the real 
-     * data in the HTML tepmlate file
+     * data in the HTML template file
      */
     private String getMergedHTMLFilename()
     {
