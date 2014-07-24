@@ -253,7 +253,7 @@ public class SectionProcessingTask
      */
     private void deleteWorkDir() throws IOException, InterruptedException
     {
-       Exec.exec("rm -rf " + workDir);
+       //Exec.exec("rm -rf " + workDir);
     }
 
     private String getImage(String displayName,
@@ -278,9 +278,33 @@ public class SectionProcessingTask
             return null;
         }
 
+        // Some cheap heuristics about the font size
+        int maxWordLength = -1;
+        if (displayName.contains(" "))
+        {
+            for (String word : displayName.split(" "))
+            {
+                if (word.length() > maxWordLength)
+                    maxWordLength = word.length();
+            }
+        }
+
+        int fontSize = 11;
+        if (displayName.length() < 8)
+            fontSize = 15;
+        else if (displayName.length() < 16
+                    && maxWordLength != -1
+                    && maxWordLength < 8)
+            fontSize = 14;
+        else if (displayName.length() < 24
+                    && maxWordLength != -1
+                    && maxWordLength < 8)
+            fontSize = 13;
+
         html = html.replaceAll(Pattern.quote("${WIDTH}"), ""+width);
         html = html.replaceAll(Pattern.quote("${HEIGHT}"), ""+height);
         html = html.replaceAll(Pattern.quote("${NAME}"), ""+displayName);
+        html = html.replaceAll(Pattern.quote("${FONT_SIZE}"), ""+fontSize);
 
         try
         {
@@ -302,14 +326,7 @@ public class SectionProcessingTask
             exec.add(resourcesDir + "js/rasterize.js");
             exec.add(htmlFilename);
             exec.add(workDir + "participant-name.bmp");
-            Exec.execList(exec);
-
-            exec = new LinkedList<String>();
-            exec.add("convert");
-            exec.add(workDir + "participant-name.bmp");
-            exec.add("-crop");
-            exec.add(width+"x"+height+"+0+0");
-            exec.add(workDir + "participant-name-cropped.bmp");
+            exec.add(width + "px*" + height + "px");
             Exec.execList(exec);
         }
         catch (Exception e)
@@ -318,6 +335,6 @@ public class SectionProcessingTask
                                        + " not using an image: " + e);
             return null;
         }
-        return workDir + "participant-name-cropped.bmp";
+        return workDir + "participant-name.bmp";
     }
 }

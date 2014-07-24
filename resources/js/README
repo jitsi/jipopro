@@ -1,0 +1,3 @@
+rasterize.js taken from the phantomjs examples, available under a BSD license:
+https://github.com/ariya/phantomjs/blob/master/examples/rasterize.js
+https://github.com/ariya/phantomjs/blob/master/LICENSE.BSD
