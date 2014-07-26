@@ -250,9 +250,9 @@ public class PostProcessing
                     participant.lastActiveInstant = eventInstant;
                     //Needs refactoring
                     participant.aspectRatio = 
-                        event.getAspectRatio() == AspectRatio.ASPECT_RATIO_16_9 ?
-                        AspectRatioUtil.ASPECT_RATIO_16_9 :
-                        AspectRatioUtil.ASPECT_RATIO_4_3;
+                        event.getAspectRatio() == AspectRatio.ASPECT_RATIO_4_3
+                        ? AspectRatioUtil.ASPECT_RATIO_4_3
+                        : AspectRatioUtil.ASPECT_RATIO_16_9;
                     participant.fileName = inDir + event.getFilename();
                     participant.decodedFilename = outDir +
                             Utils.trimFileExtension(event.getFilename()) + ".mov";

@@ -49,11 +49,18 @@ public class SectionProcessingTask
         workDir = outDir + "section" + sectionDesc.sequenceNumber + "/";
         outputDir = outDir + "sections/";
         this.resourcesDir = resourcesDir + "/";
+
     }
     
     @Override
     public void run()
     {
+        String s = "Processing section" + sectionDesc.sequenceNumber;
+        s += "; duration=" + (sectionDesc.endInstant - sectionDesc.startInstant);
+        s += "; largeDimension" + sectionDesc.largeVideoDimension;
+        s+= "; smallDimensions:" + sectionDesc.smallVideosDimensions;
+        System.err.println(s);
+
         try
         {
             Exec.exec("mkdir -p " + workDir);
