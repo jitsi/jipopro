@@ -459,11 +459,21 @@ public class PostProcessing
             Exec.exec("sox " + filenames[j] + " " + outDir + "audio_tmp/padded" + j
                       + ".wav pad " + Utils.millisToSeconds(padding[j]));
 
-        String exec = "sox --combine mix-power ";
-        for (int j = 0; j < i; j++)
-            exec += outDir + "audio_tmp/padded" + j + ".wav ";
-        exec += outputFilename;
-        Exec.exec(exec);
+        if (i > 1)
+        {
+            String exec = "sox --combine mix-power ";
+            for (int j = 0; j < i; j++)
+                exec += outDir + "audio_tmp/padded" + j + ".wav ";
+            exec += outputFilename;
+            Exec.exec(exec);
+        }
+        else
+        {
+            // nothing to mix
+            Exec.execArray("mv",
+                           outDir + "audio_tmp/padded0.wav",
+                           outputFilename);
+        }
 
         Exec.exec("rm -rf " + outDir + "audio_tmp");
 
